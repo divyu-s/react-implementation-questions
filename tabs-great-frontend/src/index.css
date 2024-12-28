@@ -1,0 +1,29 @@
+body {
+  font-family: sans-serif;
+}
+
+.tab-container {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  padding: 5px 10px;
+  background: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  color: purple;
+  border-color: purple;
+}
+
+.selected {
+  background: purple;
+  color: white;
+}
+
+.selected:hover {
+  color: white;
+}
