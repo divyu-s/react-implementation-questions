@@ -1,42 +1,89 @@
 import { useState } from "react";
-import users from "./data/users.json";
+import usersList from "./data/users.json";
 
-const colums = [
+const columns = [
   { label: "ID", key: "id" },
   { label: "Name", key: "name" },
   { label: "Age", key: "age" },
-  { label: "Occupation", key: "ocsscupation" },
+  { label: "Occupation", key: "occupation" },
 ];
 
-const paginateUsers = function (userList, page, dataPerPage) {
-  const start = page * dataPerPage;
-  const end = page * dataPerPage + dataPerPage;
-  const paginatedData = userList.slice(start, end);
-  const pages = Math.ceil(userList.length / dataPerPage);
+function paginateUsers(usersList, page, pageSize) {
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
 
-  return { pages, paginatedData };
-};
+  const pageUsers = usersList.slice(start, end);
+  const totalPages = Math.ceil(usersList.length / pageSize);
+  return { pageUsers, totalPages };
+}
+
+function sortTableData(users, key, order) {
+  let copyUsers = [];
+  copyUsers = [...users];
+
+  if (order === "asc") {
+    copyUsers.sort((a, b) => compareAsc(a, b, key));
+  } else {
+    copyUsers.sort((a, b) => compareDsc(a, b, key));
+  }
+
+  return copyUsers;
+}
+
+function compareAsc(a, b, key) {
+  if (a[key] < b[key]) {
+    return -1;
+  } else if (a[key] > b[key]) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+function compareDsc(a, b, key) {
+  if (a[key] < b[key]) {
+    return 1;
+  } else if (a[key] > b[key]) {
+    return -1;
+  } else {
+    return 0;
+  }
+}
 
 export default function DataTable() {
-  const [message, setMessage] = useState("Data Table");
-  const [page, setPage] = useState(0);
-  const [dataPerPage, setDataPerPage] = useState(5);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const [users, setUsers] = useState(usersList);
+  const [sortBy, setSortBy] = useState("");
+  const [orderBy, setOrderBy] = useState("");
 
-  const { pages, paginatedData } = paginateUsers(users, page, dataPerPage);
+  const sortedUsers = sortTableData(users, sortBy, orderBy);
+  const { totalPages, pageUsers } = paginateUsers(sortedUsers, page, pageSize);
 
   return (
     <div>
-      <h1>{message}</h1>
       <table>
         <thead>
           <tr>
-            {colums.map(({ label, key }) => (
-              <th key={key}>{label}</th>
+            {columns.map(({ label, key }) => (
+              <th
+                key={key}
+                onClick={() => {
+                  if (sortBy !== key) {
+                    setSortBy(key);
+                    setOrderBy("asc");
+                  } else {
+                    setOrderBy(orderBy === "asc" ? "desc" : "asc");
+                  }
+                }}
+              >
+                {label}
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {paginatedData.map(({ id, name, age, occupation }) => (
+          {pageUsers.map(({ id, name, age, occupation }) => (
             <tr key={id}>
               <td>{id}</td>
               <td>{name}</td>
@@ -46,27 +93,42 @@ export default function DataTable() {
           ))}
         </tbody>
       </table>
-      <div class="pagination">
+      <hr />
+      <div className="pagination">
         <select
-          value={dataPerPage}
-          onChange={(e) => {
-            setPage(0);
-            setDataPerPage(Number(e.target.value));
+          aria-label="Page size"
+          onChange={(event) => {
+            setPageSize(Number(event.target.value));
+            setPage(1);
           }}
         >
-          {[5, 10, 20].map((value, index) => (
-            <option value={value} key={index}>
-              {value}
+          {[5, 10, 20].map((size) => (
+            <option key={size} value={size}>
+              Show {size}
             </option>
           ))}
         </select>
-        <div>{`Page ${page + 1} of ${pages}`}</div>
-        <button disabled={page === 0} onClick={() => setPage(page - 1)}>
-          Prev
-        </button>
-        <button disabled={page == pages - 1} onClick={() => setPage(page + 1)}>
-          Next
-        </button>
+        <div className="pages">
+          <button
+            disabled={page === 1}
+            onClick={() => {
+              setPage(page - 1);
+            }}
+          >
+            Prev
+          </button>
+          <span aria-label="Page number">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            disabled={page === totalPages}
+            onClick={() => {
+              setPage(page + 1);
+            }}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );
